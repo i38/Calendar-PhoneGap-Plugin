@@ -602,14 +602,23 @@ public abstract class AbstractCalendarAccessor {
         ContentValues values = new ContentValues();
         final boolean allDayEvent = "true".equals(allday) && isAllDayEvent(new Date(startTime), new Date(endTime));
         if (allDayEvent) {
-            //all day events must be in UTC time zone per Android specification, getOffset accounts for daylight savings time
-            values.put(Events.EVENT_TIMEZONE, "UTC");
-            values.put(Events.DTSTART, startTime + TimeZone.getDefault().getOffset(startTime));
+          //all day events must be in UTC time zone per Android specification, getOffset accounts for daylight savings time
+          values.put(Events.EVENT_TIMEZONE, "UTC");
+          values.put(Events.DTSTART, startTime + TimeZone.getDefault().getOffset(startTime));
+          //i38: must use duration instead of dtend for recurring event
+          if (recurrence == null) {
             values.put(Events.DTEND, endTime + TimeZone.getDefault().getOffset(endTime));
+          } else {
+            values.put(Events.DURATION, "P" + ((endTime - startTime) / (24 * 60 * 60000)) + "D");
+          }
         } else {
-            values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
-            values.put(Events.DTSTART, startTime);
+          values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+          values.put(Events.DTSTART, startTime);
+          if (recurrence == null) {
             values.put(Events.DTEND, endTime);
+          } else {
+            values.put(Events.DURATION, "P" + ((endTime - startTime) / 60000) + "M");
+          }
         }
         values.put(Events.ALL_DAY, allDayEvent ? 1 : 0);
         values.put(Events.TITLE, title);
